@@ -1,6 +1,6 @@
 # HYDRA
 
-**Hybrid Data Research & Analysis** — An Open Source Intelligence (OSINT) collection and analysis platform.
+**Hybrid Y-Service Data Research & Analysis** — An Open Source Intelligence (OSINT) collection and analysis platform.
 
 ---
 
