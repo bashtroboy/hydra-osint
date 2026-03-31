@@ -9,7 +9,7 @@ import {
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 /** Valid entity types tracked by HYDRA */
-export const ENTITY_TYPES = ['aircraft', 'vessel', 'network', 'seismic'] as const;
+export const ENTITY_TYPES = ['aircraft', 'vessel', 'network', 'seismic', 'radiosonde', 'satellite'] as const;
 
 /**
  * Entities table — stores tracked objects across all data sources.

@@ -13,6 +13,12 @@ export const QUEUE_NAMES = {
 export const JOB_TYPES = {
   ADSB_FETCH: 'adsb-fetch',
   AIS_FETCH: 'ais-fetch',
+  SATNOGS_FETCH: 'satnogs-fetch',
+  SONDEHUB_FETCH: 'sondehub-fetch',
+  OPENMHZ_FETCH: 'openmhz-fetch',
+  WSPRNET_FETCH: 'wsprnet-fetch',
+  EIBI_FETCH: 'eibi-fetch',
+  PRIYOM_FETCH: 'priyom-fetch',
 } as const;
 
 /**

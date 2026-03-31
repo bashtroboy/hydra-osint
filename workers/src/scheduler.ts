@@ -3,8 +3,16 @@ import type { Logger } from 'pino';
 import { createLogger } from '@hydra/core';
 import { JOB_TYPES } from './queues.js';
 
-/** Default interval for ADS-B fetch jobs in milliseconds. */
-const ADSB_FETCH_INTERVAL_MS = 30_000;
+/** Collection job schedule definitions. */
+const COLLECTION_SCHEDULES = [
+  { jobType: JOB_TYPES.ADSB_FETCH, intervalMs: 30_000, id: 'adsb-fetch-repeatable' },
+  { jobType: JOB_TYPES.SATNOGS_FETCH, intervalMs: 120_000, id: 'satnogs-fetch-repeatable' },
+  { jobType: JOB_TYPES.SONDEHUB_FETCH, intervalMs: 60_000, id: 'sondehub-fetch-repeatable' },
+  { jobType: JOB_TYPES.OPENMHZ_FETCH, intervalMs: 30_000, id: 'openmhz-fetch-repeatable' },
+  { jobType: JOB_TYPES.WSPRNET_FETCH, intervalMs: 300_000, id: 'wsprnet-fetch-repeatable' },
+  { jobType: JOB_TYPES.EIBI_FETCH, intervalMs: 86_400_000, id: 'eibi-fetch-repeatable' },
+  { jobType: JOB_TYPES.PRIYOM_FETCH, intervalMs: 3_600_000, id: 'priyom-fetch-repeatable' },
+] as const;
 
 /**
  * Schedule repeatable collection jobs on the given queue.
@@ -14,30 +22,25 @@ const ADSB_FETCH_INTERVAL_MS = 30_000;
  * automatically de-duplicated by BullMQ.
  *
  * @param collectionQueue - The BullMQ collection queue
- *
- * @example
- * ```ts
- * const queue = createQueue(QUEUE_NAMES.COLLECTION, redisConnection);
- * await scheduleCollectionJobs(queue);
- * ```
  */
 export async function scheduleCollectionJobs(queue: Queue): Promise<void> {
   const logger: Logger = createLogger({ name: 'job-scheduler' });
 
-  // Schedule ADS-B fetch every 30 seconds
-  await queue.add(
-    JOB_TYPES.ADSB_FETCH,
-    { timestamp: Date.now() },
-    {
-      repeat: {
-        every: ADSB_FETCH_INTERVAL_MS,
+  for (const schedule of COLLECTION_SCHEDULES) {
+    await queue.add(
+      schedule.jobType,
+      { timestamp: Date.now() },
+      {
+        repeat: {
+          every: schedule.intervalMs,
+        },
+        jobId: schedule.id,
       },
-      jobId: 'adsb-fetch-repeatable',
-    },
-  );
+    );
 
-  logger.info(
-    { jobType: JOB_TYPES.ADSB_FETCH, intervalMs: ADSB_FETCH_INTERVAL_MS },
-    'Scheduled repeatable ADS-B fetch job',
-  );
+    logger.info(
+      { jobType: schedule.jobType, intervalMs: schedule.intervalMs },
+      `Scheduled repeatable ${schedule.jobType} job`,
+    );
+  }
 }

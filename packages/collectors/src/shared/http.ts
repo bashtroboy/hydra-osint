@@ -90,3 +90,81 @@ export async function fetchWithRetry<T>(
     ? lastError
     : new ExternalServiceError('HTTP', String(lastError), { url });
 }
+
+/**
+ * Fetch wrapper identical to {@link fetchWithRetry} but returns the response
+ * body as plain text instead of parsing it as JSON.
+ *
+ * Useful for downloading CSV, TSV, or other non-JSON payloads.
+ *
+ * @param url     - The URL to fetch
+ * @param options - Timeout, retry, and header options
+ * @returns The response body as a string
+ * @throws {ExternalServiceError} When the request fails after all retries
+ *
+ * @example
+ * ```ts
+ * const csv = await fetchTextWithRetry('https://www.eibi.de/csv/csv.csv');
+ * ```
+ */
+export async function fetchTextWithRetry(
+  url: string,
+  options: FetchWithRetryOptions = {},
+): Promise<string> {
+  const {
+    timeoutMs = 30_000,
+    maxAttempts = 3,
+    baseDelayMs = 1_000,
+    headers,
+  } = options;
+
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers,
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '<unreadable>');
+        throw new ExternalServiceError(
+          'HTTP',
+          `${response.status} ${response.statusText}: ${body}`,
+          { url, status: response.status },
+        );
+      }
+
+      const text = await response.text();
+      return text;
+    } catch (error: unknown) {
+      lastError = error;
+
+      if (error instanceof ExternalServiceError) {
+        const status = error.details?.['status'];
+        if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) {
+          throw error;
+        }
+      }
+
+      if (attempt < maxAttempts) {
+        const delay = baseDelayMs * 2 ** (attempt - 1);
+        await new Promise((resolve) => {
+          setTimeout(resolve, delay);
+        });
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  throw lastError instanceof ExternalServiceError
+    ? lastError
+    : new ExternalServiceError('HTTP', String(lastError), { url });
+}

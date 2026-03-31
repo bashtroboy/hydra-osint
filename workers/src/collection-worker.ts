@@ -3,44 +3,65 @@ import type { Job, ConnectionOptions } from 'bullmq';
 import type { Logger } from 'pino';
 import { createLogger } from '@hydra/core';
 import type { DatabaseClient } from '@hydra/database';
-import { AdsbCollector, createAdsbConfig } from '@hydra/collectors';
+import {
+  AdsbCollector,
+  createAdsbConfig,
+  SatnogsCollector,
+  createSatnogsConfig,
+  SondehubCollector,
+  createSondehubConfig,
+  OpenmhzCollector,
+  createOpenmhzConfig,
+  WsprnetCollector,
+  createWsprnetConfig,
+  EibiCollector,
+  createEibiConfig,
+  PriyomCollector,
+  createPriyomConfig,
+} from '@hydra/collectors';
 import type { CollectorResult } from '@hydra/collectors';
 import { QUEUE_NAMES, JOB_TYPES } from './queues.js';
 
-/** Data payload for ADS-B fetch jobs. */
-interface AdsbFetchJobData {
+/** Data payload for collection jobs. */
+interface CollectionJobData {
   /** Timestamp when the job was scheduled (Unix ms). */
   timestamp: number;
 }
-
-/** Union of all known collection job data shapes. */
-type CollectionJobData = AdsbFetchJobData;
 
 /**
  * Creates and starts a BullMQ worker that processes data-collection jobs.
  *
  * Supports the following job types:
- * - `adsb-fetch`: Invokes the ADS-B collector to fetch and persist aircraft states
+ * - `adsb-fetch`: Aircraft tracking via OpenSky Network
+ * - `satnogs-fetch`: Satellite telemetry via SatNOGS
+ * - `sondehub-fetch`: Weather radiosonde tracking via SondeHub
+ * - `openmhz-fetch`: Trunked radio calls via OpenMHz
+ * - `wsprnet-fetch`: HF propagation beacons via WSPRnet
+ * - `eibi-fetch`: Shortwave broadcast schedules via EiBi
+ * - `priyom-fetch`: Numbers station schedules via Priyom
  *
  * @param connection  - Redis connection options
  * @param db          - HYDRA database client
- * @param concurrency - Number of jobs to process concurrently. Defaults to 1.
+ * @param concurrency - Number of jobs to process concurrently. Defaults to 2.
  * @returns The running BullMQ Worker instance
- *
- * @example
- * ```ts
- * const worker = createCollectionWorker(redisOpts, dbClient, 2);
- * ```
  */
 export function createCollectionWorker(
   connection: ConnectionOptions,
   db: DatabaseClient,
-  concurrency = 1,
+  concurrency = 2,
 ): Worker<CollectionJobData, CollectorResult> {
   const logger: Logger = createLogger({ name: 'collection-worker' });
 
-  const adsbConfig = createAdsbConfig();
-  const adsbCollector = new AdsbCollector(adsbConfig, db);
+  // Initialize all collectors
+  const collectors = {
+    [JOB_TYPES.ADSB_FETCH]: new AdsbCollector(createAdsbConfig(), db),
+    [JOB_TYPES.SATNOGS_FETCH]: new SatnogsCollector(createSatnogsConfig(), db),
+    [JOB_TYPES.SONDEHUB_FETCH]: new SondehubCollector(createSondehubConfig(), db),
+    [JOB_TYPES.OPENMHZ_FETCH]: new OpenmhzCollector(createOpenmhzConfig(), db),
+    [JOB_TYPES.WSPRNET_FETCH]: new WsprnetCollector(createWsprnetConfig(), db),
+    [JOB_TYPES.EIBI_FETCH]: new EibiCollector(createEibiConfig(), db),
+    [JOB_TYPES.PRIYOM_FETCH]: new PriyomCollector(createPriyomConfig(), db),
+  } as const;
 
   const worker = new Worker<CollectionJobData, CollectorResult>(
     QUEUE_NAMES.COLLECTION,
@@ -52,19 +73,14 @@ export function createCollectionWorker(
 
       await job.updateProgress(0);
 
-      let result: CollectorResult;
-
-      switch (job.name) {
-        case JOB_TYPES.ADSB_FETCH: {
-          result = await adsbCollector.collect();
-          break;
-        }
-        default: {
-          const message = `Unknown job type: ${job.name}`;
-          logger.error({ jobName: job.name }, message);
-          throw new Error(message);
-        }
+      const collector = collectors[job.name as keyof typeof collectors];
+      if (!collector) {
+        const message = `Unknown job type: ${job.name}`;
+        logger.error({ jobName: job.name }, message);
+        throw new Error(message);
       }
+
+      const result = await collector.collect();
 
       await job.updateProgress(100);
 
@@ -86,8 +102,8 @@ export function createCollectionWorker(
       connection,
       concurrency,
       limiter: {
-        max: 1,
-        duration: 10_000, // at most 1 job per 10s to respect API rate limits
+        max: 2,
+        duration: 10_000,
       },
     },
   );
@@ -103,7 +119,10 @@ export function createCollectionWorker(
     logger.error({ error: error.message }, 'Worker error');
   });
 
-  logger.info({ concurrency }, 'Collection worker started');
+  logger.info(
+    { concurrency, collectors: Object.keys(collectors) },
+    'Collection worker started',
+  );
 
   return worker;
 }
