@@ -9,6 +9,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
+    "demo": "pnpm --filter @hydra/api demo",
     "db:migrate": "pnpm --filter @hydra/database migrate",
     "db:generate": "pnpm --filter @hydra/database generate",
     "clean": "turbo run clean && rm -rf node_modules"
