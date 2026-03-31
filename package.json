@@ -1,0 +1,26 @@
+{
+  "name": "hydra-osint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HYDRA OSINT Collection & Analysis Platform",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:migrate": "pnpm --filter @hydra/database migrate",
+    "db:generate": "pnpm --filter @hydra/database generate",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0",
+    "prettier": "^3.4.0",
+    "eslint": "^9.17.0"
+  },
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
