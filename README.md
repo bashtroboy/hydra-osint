@@ -25,6 +25,85 @@ HYDRA is a web-based platform that collects publicly available intelligence data
 
 ---
 
+## Development Setup
+
+### Quick Start (Demo Mode)
+
+Run the platform with in-memory sample data — no database required:
+
+```bash
+pnpm install
+pnpm demo
+```
+
+This starts:
+- **API** at http://localhost:3000 (Swagger docs at `/docs`)
+- **Web frontend** at http://localhost:5173
+
+### Full Development Setup
+
+For persistent data with PostgreSQL and Redis:
+
+**1. Create environment file:**
+```bash
+cp docker/.env.example docker/.env
+```
+
+**2. Start PostgreSQL and Redis:**
+```bash
+cd docker
+docker-compose up -d
+```
+
+**3. Verify services are running:**
+```bash
+docker-compose ps
+```
+
+**4. Run database migrations:**
+```bash
+cd ..
+pnpm db:migrate
+```
+
+**5. Create API environment file:**
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+**6. Start the full dev environment:**
+```bash
+pnpm dev
+```
+
+### Connection Details (Defaults)
+
+| Service    | Host      | Port | Credentials                |
+|------------|-----------|------|----------------------------|
+| PostgreSQL | localhost | 5432 | hydra / hydra_dev_password |
+| Redis      | localhost | 6379 | (no auth)                  |
+
+**Database URL:**
+```
+postgresql://hydra:hydra_dev_password@localhost:5432/hydra_dev
+```
+
+### Useful Docker Commands
+
+```bash
+# Stop services
+docker-compose down
+
+# Stop and remove data
+docker-compose down -v
+
+# View logs
+docker-compose logs -f postgres
+docker-compose logs -f redis
+```
+
+---
+
 ## Implementation Stages
 
 ### Stage 1: Foundation

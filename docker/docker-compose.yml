@@ -1,0 +1,41 @@
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    container_name: hydra-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hydra_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-hydra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hydra_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/home/postgres/pgdata/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hydra} -d ${POSTGRES_DB:-hydra_dev}"]
+
+  redis:
+    image: redis:7-alpine
+    container_name: hydra-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 10s
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
