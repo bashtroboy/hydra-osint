@@ -5,7 +5,7 @@ export default defineConfig({
   out: './src/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env['DATABASE_URL'] ?? 'postgres://localhost:5432/hydra',
+    url: process.env['DATABASE_URL'] ?? 'postgresql://hydra:hydra_dev_password@localhost:5433/hydra_dev',
   },
   verbose: true,
   strict: true,

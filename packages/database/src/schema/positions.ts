@@ -8,7 +8,7 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { entities } from './entities.js';
+import { entities } from './entities';
 
 /**
  * Positions table — stores time-series location data for tracked entities.

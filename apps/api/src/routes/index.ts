@@ -5,6 +5,8 @@ import { authRoutes } from './auth.js';
 import { entityRoutes } from './entities.js';
 import { positionRoutes } from './positions.js';
 import { sourceRoutes } from './sources.js';
+import { eventRoutes } from './events.js';
+import { statsRoutes } from './stats.js';
 
 /**
  * Registers all route modules under the `/api/v1` prefix.
@@ -26,6 +28,8 @@ export async function registerRoutes(
       await api.register(entityRoutes, { db });
       await api.register(positionRoutes, { db });
       await api.register(sourceRoutes, { db });
+      await api.register(eventRoutes, { db });
+      await api.register(statsRoutes, { db });
     },
     { prefix: '/api/v1' },
   );

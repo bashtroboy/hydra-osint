@@ -89,6 +89,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  logger.fatal({ error }, 'Failed to start workers');
+  const err = error instanceof Error ? { message: error.message, stack: error.stack } : error;
+  logger.fatal({ err }, 'Failed to start workers');
+  console.error('Worker startup error:', error);
   process.exit(1);
 });

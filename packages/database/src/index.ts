@@ -1,5 +1,5 @@
-export { createDatabase, getDatabaseUrl } from './client.js';
-export type { DatabaseClient } from './client.js';
+export { createDatabase, getDatabaseUrl } from './client';
+export type { DatabaseClient } from './client';
 
 export {
   entities,
@@ -11,7 +11,7 @@ export {
   DATA_SOURCE_TYPES,
   DATA_SOURCE_STATUSES,
   users,
-} from './schema/index.js';
+} from './schema/index';
 
 export type {
   Entity,
@@ -24,4 +24,4 @@ export type {
   NewDataSource,
   User,
   NewUser,
-} from './types.js';
+} from './types';

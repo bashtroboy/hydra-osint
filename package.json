@@ -9,12 +9,15 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "demo": "pnpm --filter @hydra/api demo",
+    "demo": "concurrently -n api,web -c blue,green \"pnpm --filter @hydra/api demo\" \"pnpm --filter @hydra/web dev\"",
+    "demo:api": "pnpm --filter @hydra/api demo",
+    "demo:web": "pnpm --filter @hydra/web dev",
     "db:migrate": "pnpm --filter @hydra/database migrate",
     "db:generate": "pnpm --filter @hydra/database generate",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "concurrently": "^9.1.0",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0",
     "prettier": "^3.4.0",
